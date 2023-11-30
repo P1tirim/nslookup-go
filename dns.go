@@ -1,4 +1,4 @@
-package main
+package nslookup
 
 import "math/rand"
 

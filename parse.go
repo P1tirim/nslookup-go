@@ -1,4 +1,4 @@
-package main
+package nslookup
 
 import (
 	"encoding/binary"
@@ -33,7 +33,8 @@ const (
 
 const serverDefault = "8.8.8.8:53"
 
-func (q *QueryDNS) GetInfo(server string) (*Response, error) {
+// Default server is 8.8.8.8:53.
+func (q *QueryDNS) Lookup(server string) (*Response, error) {
 	if len(q.Queries) == 0 {
 		return nil, ErrEmptyQueries
 	}
@@ -65,7 +66,7 @@ func (q *QueryDNS) GetInfo(server string) (*Response, error) {
 		return nil, err
 	}
 
-	buf := make([]byte, 1024)
+	buf := make([]byte, 4096)
 
 	n, err := conn.Read(buf)
 	if err != nil {
