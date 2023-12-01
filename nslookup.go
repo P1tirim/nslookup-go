@@ -53,35 +53,35 @@ func LookupIP(domain, server string) (ips []net.IP, err error) {
 	query := NewQueryDNS(domain, TypeA)
 
 	resp, err := query.Lookup(server)
-	if err != nil {
+	if err == nil {
+		for _, answer := range resp.Answers {
+			if answer.Type != TypeA {
+				continue
+			}
+
+			if v, ok := answer.Data.(AnswerTypeString); ok {
+				ips = append(ips, net.ParseIP(v.Data))
+			}
+		}
+	} else if err != ErrNoAnswer {
 		return nil, err
-	}
-
-	for _, answer := range resp.Answers {
-		if answer.Type != TypeA {
-			continue
-		}
-
-		if v, ok := answer.Data.(AnswerTypeString); ok {
-			ips = append(ips, net.ParseIP(v.Data))
-		}
 	}
 
 	query = NewQueryDNS(domain, TypeAAAA)
 
 	resp, err = query.Lookup(server)
-	if err != nil {
+	if err == nil {
+		for _, answer := range resp.Answers {
+			if answer.Type != TypeAAAA {
+				continue
+			}
+
+			if v, ok := answer.Data.(AnswerTypeString); ok {
+				ips = append(ips, net.ParseIP(v.Data))
+			}
+		}
+	} else if err != ErrNoAnswer {
 		return nil, err
-	}
-
-	for _, answer := range resp.Answers {
-		if answer.Type != TypeAAAA {
-			continue
-		}
-
-		if v, ok := answer.Data.(AnswerTypeString); ok {
-			ips = append(ips, net.ParseIP(v.Data))
-		}
 	}
 
 	return ips, nil
