@@ -3,7 +3,6 @@ package nslookup
 import (
 	"encoding/binary"
 	"errors"
-	"net"
 	"strings"
 )
 
@@ -32,49 +31,6 @@ const (
 )
 
 const serverDefault = "8.8.8.8:53"
-
-// Default server is 8.8.8.8:53.
-func (q *QueryDNS) Lookup(server string) (*Response, error) {
-	if len(q.Queries) == 0 {
-		return nil, ErrEmptyQueries
-	}
-
-	if server == "" {
-		server = serverDefault
-	}
-
-	conn, err := net.Dial("udp", server)
-	if err != nil {
-		return nil, err
-	}
-
-	defer conn.Close()
-
-	payload := make([]byte, 0)
-	payload = binary.BigEndian.AppendUint16(payload, q.TransactionID)
-	payload = binary.BigEndian.AppendUint16(payload, q.Flags)
-	payload = binary.BigEndian.AppendUint16(payload, q.QuestionsCount)
-	payload = binary.BigEndian.AppendUint16(payload, q.AnswersCount)
-	payload = binary.BigEndian.AppendUint16(payload, q.AuthorityCount)
-	payload = binary.BigEndian.AppendUint16(payload, q.AdditionalsCount)
-	payload = parseDomain(payload, q.Queries[0].Name)
-	payload = binary.BigEndian.AppendUint16(payload, q.Queries[0].Type)
-	payload = binary.BigEndian.AppendUint16(payload, q.Queries[0].Class)
-
-	_, err = conn.Write(payload)
-	if err != nil {
-		return nil, err
-	}
-
-	buf := make([]byte, 4096)
-
-	n, err := conn.Read(buf)
-	if err != nil {
-		return nil, err
-	}
-
-	return parseResponse(buf[:n], len(payload), q.Queries)
-}
 
 func parseDomain(payload []byte, domain string) []byte {
 	a := strings.Split(domain, ".")

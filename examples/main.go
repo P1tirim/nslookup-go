@@ -50,4 +50,31 @@ func main() {
 			}
 		}
 	}
+
+	ips, err := nslookup.LookupIP("google.com", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, ip := range ips {
+		fmt.Println("IP: " + ip.String())
+	}
+
+	texts, err := nslookup.LookupTEXT("google.com", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, text := range texts {
+		fmt.Println("text: " + text)
+	}
+
+	cnames, err := nslookup.LookupCNAME("google.com", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, cname := range cnames {
+		fmt.Println("CNAME: " + cname)
+	}
 }
