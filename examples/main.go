@@ -8,6 +8,34 @@ import (
 )
 
 func main() {
+	ips, err := nslookup.LookupIP("google.com", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, ip := range ips {
+		fmt.Println("IP: " + ip.String())
+	}
+
+	texts, err := nslookup.LookupTEXT("google.com", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, text := range texts {
+		fmt.Println("text: " + text)
+	}
+
+	cnames, err := nslookup.LookupCNAME("google.com", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, cname := range cnames {
+		fmt.Println("CNAME: " + cname)
+	}
+
+	// Advande usage
 	query := nslookup.NewQueryDNS("google.com", nslookup.TypeA)
 
 	resp, err := query.Lookup("8.8.8.8:53")
@@ -49,32 +77,5 @@ func main() {
 				fmt.Println("text: " + t[i].Text)
 			}
 		}
-	}
-
-	ips, err := nslookup.LookupIP("google.com", "")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, ip := range ips {
-		fmt.Println("IP: " + ip.String())
-	}
-
-	texts, err := nslookup.LookupTEXT("google.com", "")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, text := range texts {
-		fmt.Println("text: " + text)
-	}
-
-	cnames, err := nslookup.LookupCNAME("google.com", "")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, cname := range cnames {
-		fmt.Println("CNAME: " + cname)
 	}
 }
