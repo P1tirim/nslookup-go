@@ -50,39 +50,19 @@ func (q *QueryDNS) Lookup(server string) (*Response, error) {
 
 // Return array of IPv4 and IPv6 of this domain.
 func LookupIP(domain, server string) (ips []net.IP, err error) {
-	query := NewQueryDNS(domain, TypeA)
-
-	resp, err := query.Lookup(server)
-	if err == nil {
-		for _, answer := range resp.Answers {
-			if answer.Type != TypeA {
-				continue
-			}
-
-			if v, ok := answer.Data.(AnswerTypeString); ok {
-				ips = append(ips, net.ParseIP(v.Data))
-			}
-		}
-	} else if err != ErrNoAnswer {
+	resp, err := LookupIPv4(domain, server)
+	if err != ErrNoAnswer {
 		return nil, err
 	}
 
-	query = NewQueryDNS(domain, TypeAAAA)
+	ips = append(ips, resp...)
 
-	resp, err = query.Lookup(server)
-	if err == nil {
-		for _, answer := range resp.Answers {
-			if answer.Type != TypeAAAA {
-				continue
-			}
-
-			if v, ok := answer.Data.(AnswerTypeString); ok {
-				ips = append(ips, net.ParseIP(v.Data))
-			}
-		}
-	} else if err != ErrNoAnswer {
+	resp, err = LookupIPv6(domain, server)
+	if err != ErrNoAnswer {
 		return nil, err
 	}
+
+	ips = append(ips, resp...)
 
 	return ips, nil
 }
@@ -123,4 +103,46 @@ func LookupCNAME(domain, server string) (cnames []string, err error) {
 	}
 
 	return cnames, nil
+}
+
+func LookupIPv4(domain, server string) (ips []net.IP, err error) {
+	query := NewQueryDNS(domain, TypeA)
+
+	resp, err := query.Lookup(server)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, answer := range resp.Answers {
+		if answer.Type != TypeA {
+			continue
+		}
+
+		if v, ok := answer.Data.(AnswerTypeString); ok {
+			ips = append(ips, net.ParseIP(v.Data))
+		}
+	}
+
+	return ips, nil
+}
+
+func LookupIPv6(domain, server string) (ips []net.IP, err error) {
+	query := NewQueryDNS(domain, TypeAAAA)
+
+	resp, err := query.Lookup(server)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, answer := range resp.Answers {
+		if answer.Type != TypeAAAA {
+			continue
+		}
+
+		if v, ok := answer.Data.(AnswerTypeString); ok {
+			ips = append(ips, net.ParseIP(v.Data))
+		}
+	}
+
+	return ips, nil
 }
