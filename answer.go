@@ -5,7 +5,7 @@ import (
 	"net/netip"
 )
 
-// TypeA, TypeAAAA, CNAME
+// TypeA, TypeAAAA, TypeCNAME, TypeNS
 type AnswerTypeString struct {
 	Data string
 }
@@ -56,26 +56,16 @@ func (a *Answer) parseTypeTXT(answers []byte) error {
 	return nil
 }
 
-func (a *Answer) parseTypeCNAME(answers []byte) error {
+// TypeCNAME, TypeNS.
+func (a *Answer) parseTypeWithDomain(answers, originalAnswer []byte, domains map[int]string) error {
 	if len(answers) < int(a.DataLength) {
 		return ErrInvalidAnswerFromServer
 	}
 
-	pointer := 0
-	cname := ""
-
-	for {
-		length := int(answers[pointer])
-		cname += string(answers[pointer+1:pointer+length+1]) + "."
-		pointer += length + 1
-
-		if pointer == int(a.DataLength) || answers[pointer] == 0xc0 {
-			break
-		}
-	}
+	name := parseAnswerDomain(answers, originalAnswer, domains)
 
 	a.Data = AnswerTypeString{
-		Data: cname[:len(cname)-1],
+		Data: name[:len(name)-1],
 	}
 
 	return nil
@@ -91,4 +81,33 @@ func (a *Answer) parseTypeAAAA(answers []byte) error {
 	}
 
 	return nil
+}
+
+func parseAnswerDomain(arr []byte, originalAnswer []byte, domains map[int]string) string {
+	pointer := 0
+	name := ""
+
+	for {
+		length := int(arr[pointer])
+		name += string(arr[pointer+1:pointer+length+1]) + "."
+		pointer += length + 1
+
+		if arr[pointer] == 0x0 {
+			break
+		}
+
+		if arr[pointer] == 0xc0 {
+			shiftPointer := int(arr[pointer+1])
+
+			if v, ok := domains[shiftPointer]; ok {
+				name += v
+			} else {
+				name += parseAnswerDomain(originalAnswer[shiftPointer:], originalAnswer, domains)
+			}
+
+			break
+		}
+	}
+
+	return name
 }

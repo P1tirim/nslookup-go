@@ -24,6 +24,7 @@ var (
 const (
 	// IPv4
 	TypeA     = 1
+	TypeNS    = 2
 	TypeCNAME = 5
 	TypeTXT   = 16
 	// IPv6
@@ -84,6 +85,9 @@ func parseResponse(response []byte, requestLength int, queries []Query) (resp *R
 		return nil, ErrNotAuth
 	}
 
+	originalResponse := response
+	domains := make(map[int]string)
+
 	response = response[requestLength:]
 	if len(response) == 0 || resp.AnswersCount == 0 {
 		return nil, ErrNoAnswer
@@ -94,21 +98,21 @@ func parseResponse(response []byte, requestLength int, queries []Query) (resp *R
 	}
 
 	if resp.AnswersCount != 0 {
-		response, resp.Answers, err = parseAnswer(response, int(resp.AnswersCount))
+		response, resp.Answers, err = parseAnswer(response, int(resp.AnswersCount), originalResponse, domains)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if resp.AuthorityCounts != 0 {
-		response, resp.AuthorityRecords, err = parseAnswer(response, int(resp.AuthorityCounts))
+		response, resp.AuthorityRecords, err = parseAnswer(response, int(resp.AuthorityCounts), originalResponse, domains)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if resp.AdditionalCounts != 0 {
-		_, resp.AdditionalRecords, err = parseAnswer(response, int(resp.AdditionalCounts))
+		_, resp.AdditionalRecords, err = parseAnswer(response, int(resp.AdditionalCounts), originalResponse, domains)
 		if err != nil {
 			return nil, err
 		}
@@ -117,7 +121,7 @@ func parseResponse(response []byte, requestLength int, queries []Query) (resp *R
 	return resp, nil
 }
 
-func parseAnswer(response []byte, count int) ([]byte, []Answer, error) {
+func parseAnswer(response []byte, count int, originalAnswer []byte, domains map[int]string) ([]byte, []Answer, error) {
 	answers := make([]Answer, 0)
 
 	for i := 0; i < count; i++ {
@@ -142,8 +146,8 @@ func parseAnswer(response []byte, count int) ([]byte, []Answer, error) {
 			err = answer.parseTypeA(response)
 		case TypeTXT:
 			err = answer.parseTypeTXT(response)
-		case TypeCNAME:
-			err = answer.parseTypeCNAME(response)
+		case TypeCNAME, TypeNS:
+			err = answer.parseTypeWithDomain(response, originalAnswer, domains)
 		case TypeAAAA:
 			err = answer.parseTypeAAAA(response)
 		default:

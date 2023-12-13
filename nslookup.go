@@ -89,20 +89,7 @@ func LookupTEXT(domain, server string) (texts []string, err error) {
 
 // Return array of CNAMEs of this domain.
 func LookupCNAME(domain, server string) (cnames []string, err error) {
-	query := NewQueryDNS(domain, TypeCNAME)
-
-	resp, err := query.Lookup(server)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, answer := range resp.Answers {
-		if v, ok := answer.Data.(AnswerTypeString); ok {
-			cnames = append(cnames, v.Data)
-		}
-	}
-
-	return cnames, nil
+	return lookupTypeString(domain, server, TypeCNAME)
 }
 
 func LookupIPv4(domain, server string) (ips []net.IP, err error) {
@@ -145,4 +132,25 @@ func LookupIPv6(domain, server string) (ips []net.IP, err error) {
 	}
 
 	return ips, nil
+}
+
+func LookupNS(domain, server string) (ns []string, err error) {
+	return lookupTypeString(domain, server, TypeNS)
+}
+
+func lookupTypeString(domain, server string, dnsType uint16) (arr []string, err error) {
+	query := NewQueryDNS(domain, dnsType)
+
+	resp, err := query.Lookup(server)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, answer := range resp.Answers {
+		if v, ok := answer.Data.(AnswerTypeString); ok {
+			arr = append(arr, v.Data)
+		}
+	}
+
+	return arr, nil
 }

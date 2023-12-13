@@ -26,7 +26,7 @@ func main() {
 		fmt.Println("text: " + text)
 	}
 
-	cnames, err := nslookup.LookupCNAME("google.com", "")
+	cnames, err := nslookup.LookupCNAME("time.apple.com", "")
 	if err != nil {
 		log.Fatal(err)
 	}
