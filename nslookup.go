@@ -134,6 +134,27 @@ func LookupIPv6(domain, server string) (ips []net.IP, err error) {
 	return ips, nil
 }
 
+func LookupMX(domain, server string) (mx []AnswerTypeMX, err error) {
+	query := NewQueryDNS(domain, TypeMX)
+
+	resp, err := query.Lookup(server)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, answer := range resp.Answers {
+		if answer.Type != TypeMX {
+			continue
+		}
+
+		if v, ok := answer.Data.(AnswerTypeMX); ok {
+			mx = append(mx, v)
+		}
+	}
+
+	return mx, nil
+}
+
 func LookupNS(domain, server string) (ns []string, err error) {
 	return lookupTypeString(domain, server, TypeNS)
 }

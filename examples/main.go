@@ -35,7 +35,16 @@ func main() {
 		fmt.Println("CNAME: " + cname)
 	}
 
-	// Advande usage
+	mx, err := nslookup.LookupMX("google.com", "")
+	if err != nil {
+		log.Println("no answer MX")
+	}
+
+	for _, m := range mx {
+		fmt.Printf("MX: %d %s\n", m.Preference, m.MailExchange)
+	}
+
+	// Advance usage
 	query := nslookup.NewQueryDNS("google.com", nslookup.TypeA)
 
 	resp, err := query.Lookup("8.8.8.8:53")

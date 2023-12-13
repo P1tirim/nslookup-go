@@ -1,6 +1,7 @@
 package nslookup
 
 import (
+	"encoding/binary"
 	"net"
 	"net/netip"
 )
@@ -13,6 +14,11 @@ type AnswerTypeString struct {
 type AnswerTypeTXT struct {
 	TextLength int
 	Text       string
+}
+
+type AnswerTypeMX struct {
+	Preference   int
+	MailExchange string
 }
 
 func (a *Answer) parseTypeA(answers []byte) error {
@@ -79,6 +85,21 @@ func (a *Answer) parseTypeAAAA(answers []byte) error {
 	a.Data = AnswerTypeString{
 		Data: netip.AddrFrom16([16]byte(answers)).String(),
 	}
+
+	return nil
+}
+
+func (a *Answer) parseTypeMX(answers, originalAnswer []byte, domains map[int]string) error {
+	if len(answers) < int(a.DataLength) {
+		return ErrInvalidAnswerFromServer
+	}
+
+	answer := AnswerTypeMX{
+		Preference:   int(binary.BigEndian.Uint16(answers[:2])),
+		MailExchange: parseAnswerDomain(answers[2:], originalAnswer, domains),
+	}
+
+	a.Data = answer
 
 	return nil
 }

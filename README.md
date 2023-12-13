@@ -8,6 +8,7 @@ This library let you do nslookup by UDP connection. You can choose the server, w
 TypeA = 1 //IPv4
 TypeNS = 2
 TypeCNAME = 5
+TypeMX = 15
 TypeTXT = 16
 TyepAAAA= 28 //IPv6
 ```

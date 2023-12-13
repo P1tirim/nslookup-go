@@ -26,6 +26,7 @@ const (
 	TypeA     = 1
 	TypeNS    = 2
 	TypeCNAME = 5
+	TypeMX    = 15
 	TypeTXT   = 16
 	// IPv6
 	TypeAAAA = 28
@@ -150,6 +151,8 @@ func parseAnswer(response []byte, count int, originalAnswer []byte, domains map[
 			err = answer.parseTypeWithDomain(response, originalAnswer, domains)
 		case TypeAAAA:
 			err = answer.parseTypeAAAA(response)
+		case TypeMX:
+			err = answer.parseTypeMX(response, originalAnswer, domains)
 		default:
 			return nil, nil, ErrUnsupportedDNSType
 		}
