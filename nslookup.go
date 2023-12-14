@@ -155,6 +155,14 @@ func LookupMX(domain, server string) (mx []AnswerTypeMX, err error) {
 	return mx, nil
 }
 
+func LookupPTR(ip net.IP, server string) (ptr []string, err error) {
+	if ip == nil {
+		return nil, ErrNotValidIP
+	}
+
+	return lookupTypeString(reverseIPAddress(ip), server, TypePTR)
+}
+
 func LookupNS(domain, server string) (ns []string, err error) {
 	return lookupTypeString(domain, server, TypeNS)
 }

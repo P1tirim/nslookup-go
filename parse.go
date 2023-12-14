@@ -3,6 +3,7 @@ package nslookup
 import (
 	"encoding/binary"
 	"errors"
+	"net"
 	"strings"
 )
 
@@ -19,6 +20,8 @@ var (
 	ErrYXRRSet                       = errors.New("RR Set Exists when it should not")
 	ErrNXRRSet                       = errors.New("RR Set that should exist does not")
 	ErrNotAuth                       = errors.New("not authorized")
+
+	ErrNotValidIP = errors.New("not valid ip in arguments")
 )
 
 const (
@@ -26,6 +29,7 @@ const (
 	TypeA     = 1
 	TypeNS    = 2
 	TypeCNAME = 5
+	TypePTR   = 12
 	TypeMX    = 15
 	TypeTXT   = 16
 	// IPv6
@@ -147,7 +151,7 @@ func parseAnswer(response []byte, count int, originalAnswer []byte, domains map[
 			err = answer.parseTypeA(response)
 		case TypeTXT:
 			err = answer.parseTypeTXT(response)
-		case TypeCNAME, TypeNS:
+		case TypeCNAME, TypeNS, TypePTR:
 			err = answer.parseTypeWithDomain(response, originalAnswer, domains)
 		case TypeAAAA:
 			err = answer.parseTypeAAAA(response)
@@ -178,4 +182,50 @@ func removeStartWrongBytes(data []byte) []byte {
 	}
 
 	return data
+}
+
+func reverseIPAddress(ip net.IP) string {
+	reverse := ""
+	var arr []string
+
+	if ip.To4() != nil {
+		arr = strings.Split(ip.String(), ".")
+		arr[0], arr[1], arr[2], arr[3] = arr[3], arr[2], arr[1], arr[0]
+		reverse = strings.Join(arr, ".") + ".in-addr.arpa"
+	} else if ip.To16() != nil {
+		arr = strings.Split(ip.String(), ":")
+
+		for i := 0; i < len(arr); i++ {
+			for {
+				if len(arr[i]) == 4 {
+					break
+				}
+
+				if len(arr[i]) == 0 {
+					l := 8 - len(arr)
+
+					for j := 0; j < l; j++ {
+						a := arr[:i]
+						a = append(a, "0000")
+						a = append(a, arr[i:]...)
+						arr = a
+					}
+
+					break
+				}
+
+				arr[i] = "0" + arr[i]
+			}
+		}
+
+		arr = strings.Split(strings.Join(arr, ""), "")
+
+		for i, j := 0, 31; i < j; i, j = i+1, j-1 {
+			arr[i], arr[j] = arr[j], arr[i]
+		}
+
+		reverse = strings.Join(arr, ".") + ".ip6.arpa"
+	}
+
+	return reverse
 }

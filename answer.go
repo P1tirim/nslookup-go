@@ -6,7 +6,7 @@ import (
 	"net/netip"
 )
 
-// TypeA, TypeAAAA, TypeCNAME, TypeNS
+// TypeA, TypeAAAA, TypeCNAME, TypeNS, TypePTR
 type AnswerTypeString struct {
 	Data string
 }
@@ -62,7 +62,7 @@ func (a *Answer) parseTypeTXT(answers []byte) error {
 	return nil
 }
 
-// TypeCNAME, TypeNS.
+// TypeCNAME, TypeNS, TypePTR.
 func (a *Answer) parseTypeWithDomain(answers, originalAnswer []byte, domains map[int]string) error {
 	if len(answers) < int(a.DataLength) {
 		return ErrInvalidAnswerFromServer
@@ -123,7 +123,9 @@ func parseAnswerDomain(arr []byte, originalAnswer []byte, domains map[int]string
 			if v, ok := domains[shiftPointer]; ok {
 				name += v
 			} else {
-				name += parseAnswerDomain(originalAnswer[shiftPointer:], originalAnswer, domains)
+				domain := parseAnswerDomain(originalAnswer[shiftPointer:], originalAnswer, domains)
+				name += domain
+				domains[shiftPointer] = domain
 			}
 
 			break

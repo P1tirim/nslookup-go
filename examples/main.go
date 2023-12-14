@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net"
 
 	"github.com/P1tirim/nslookup-go"
 )
@@ -37,11 +38,20 @@ func main() {
 
 	mx, err := nslookup.LookupMX("google.com", "")
 	if err != nil {
-		log.Println("no answer MX")
+		log.Println(err.Error() + " MX")
 	}
 
 	for _, m := range mx {
 		fmt.Printf("MX: %d %s\n", m.Preference, m.MailExchange)
+	}
+
+	ptr, err := nslookup.LookupPTR(net.ParseIP("2a00:1450:4010:c0e::64"), "")
+	if err != nil {
+		log.Println(err.Error() + " PTR")
+	}
+
+	for _, p := range ptr {
+		fmt.Println("PTR: " + p)
 	}
 
 	// Advance usage
