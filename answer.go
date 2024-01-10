@@ -109,14 +109,6 @@ func parseAnswerDomain(arr []byte, originalAnswer []byte, domains map[int]string
 	name := ""
 
 	for {
-		length := int(arr[pointer])
-		name += string(arr[pointer+1:pointer+length+1]) + "."
-		pointer += length + 1
-
-		if arr[pointer] == 0x0 {
-			break
-		}
-
 		if arr[pointer] == 0xc0 {
 			shiftPointer := int(arr[pointer+1])
 
@@ -128,6 +120,14 @@ func parseAnswerDomain(arr []byte, originalAnswer []byte, domains map[int]string
 				domains[shiftPointer] = domain
 			}
 
+			break
+		}
+
+		length := int(arr[pointer])
+		name += string(arr[pointer+1:pointer+length+1]) + "."
+		pointer += length + 1
+
+		if arr[pointer] == 0x0 {
 			break
 		}
 	}
